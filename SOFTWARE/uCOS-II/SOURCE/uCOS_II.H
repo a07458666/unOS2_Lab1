@@ -333,6 +333,14 @@ typedef struct {
 } OS_Q_DATA;
 #endif
 
+// for lab1
+// typedef struct {
+//     INT8U             TaskType;
+//     INT8U             PrioCur;
+//     INT8U             PrioHighRdy;
+//     INT32U            Time;
+// } OS_Q_Msg;
+
 /*
 *********************************************************************************************************
 *                                           SEMAPHORE DATA
@@ -487,8 +495,12 @@ extern  INT8U  const      OSMapTbl[];               /* Priority->Bit Mask lookup
 extern  INT8U  const      OSUnMapTbl[];             /* Priority->Index    lookup table                 */
 
 //Lab1 add
-OS_EXT OS_EVENT       *OSMsgQueue;                             /* Message queue pointer                         */
-OS_EXT void           *OSMsgQueueTbl[20];                      /* Storage for messages                          */
+// OS_EXT OS_EVENT       *OSMsgQueue;                             /* Message queue pointer                         */
+// OS_EXT void           *OSMsgQueueTbl[20];                      /* Storage for messages                          */
+
+// OS_EXT  INT8U       OSMsgQueueHead;
+// OS_EXT  INT8U       OSMsgQueueEnd;
+// OS_EXT  OS_Q_Msg    *OSMsgQueueTbl[20];                      /* Storage for messages                          */
 
 /*$PAGE*/
 /*

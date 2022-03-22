@@ -13,9 +13,9 @@
 #define          TASK_2_COMP         3
 #define          TASK_3_COMP         4
 
-#define          TASK_1_PRIO        3
-#define          TASK_2_PRIO        6
-#define          TASK_3_PRIO        9
+#define          TASK_1_PRIO         3
+#define          TASK_2_PRIO         6
+#define          TASK_3_PRIO         9
 
 #define          MSG_QUEUE_SIZE     20                /* Size of message queue used in example         */
 
@@ -64,6 +64,7 @@ void  TaskStart (void *pdata)
 #endif
     char       s[100];
     INT16S     key;
+    INT8U idx;
 
 
     pdata = pdata;                                         /* Prevent compiler warning                 */
@@ -77,7 +78,6 @@ void  TaskStart (void *pdata)
 
     OSStatInit();                                          /* Initialize uC/OS-II's statistics         */
 
-    OSMsgQueue = OSQCreate(&OSMsgQueueTbl[0], MSG_QUEUE_SIZE); /* Create a message queue                   */
     printf("\nVersion V4");
     TaskStartCreateTasks();
     for (;;) {
@@ -86,9 +86,6 @@ void  TaskStart (void *pdata)
                 PC_DOSReturn();                            /* Return to DOS                            */
             }
             if (key == 0x31) {                             /* Yes, see if it's the ESCAPE key          */
-                OS_ENTER_CRITICAL();
-                OSQPost(OSMsgQueue, (void *)"Post Msg");
-                OS_EXIT_CRITICAL();
             }
         }
         OSCtxSwCtr = 0;                                    /* Clear context switch counter             */
@@ -123,7 +120,6 @@ void Task1()
     int toDelay;
     
     char  *msg;
-    char  *tempMsg = "";
     INT8U  err;
 
     start = OSTimeGet();
@@ -133,12 +129,23 @@ void Task1()
     while(1){
         while(OSTCBCur->compTime != 0)
         {
-            OS_ENTER_CRITICAL();
-            msg = (char *)OSQPend(OSMsgQueue, 0, &err);
+            // OSSchedLock();
+            // if (OSMsgQueueHead != OSMsgQueueEnd)
+            // {
+            //     printf("\n_LLL_%lu\t%s\tTask %d\tTask %d OSCtxSwCtr %d",
+            //     OSMsgQueueTbl[OSMsgQueueHead]->Time,
+            //     (OSMsgQueueTbl[OSMsgQueueHead]->TaskType == 0)? "preemt  " : "complete",
+            //     OSMsgQueueTbl[OSMsgQueueHead]->PrioCur,
+            //     OSMsgQueueTbl[OSMsgQueueHead]->PrioHighRdy,
+            //     OSCtxSwCtr);
+            //     printf("head%d\t end %d", OSMsgQueueHead, OSMsgQueueEnd);
+            //     OSMsgQueueHead = (OSMsgQueueHead + 1)%20;
+            // }
+            // msg = (char *)OSQPend(OSMsgQueue, 0, &err);
             // if (tempMsg != msg) printf("%s", msg);
             // tempMsg = msg;
-            printf("%s", msg);
-            OS_EXIT_CRITICAL();
+            // printf("%s", msg);
+            // OSSchedUnlock();
         }
         OS_ENTER_CRITICAL();
         end = OSTimeGet();

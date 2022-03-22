@@ -185,9 +185,18 @@ void  OSIntExit (void)
             OSPrioHighRdy = (INT8U)((OSIntExitY << 3) + OSUnMapTbl[OSRdyTbl[OSIntExitY]]);
             if (OSPrioHighRdy != OSPrioCur) {              /* No Ctx Sw if current task is highest rdy */
                 //for lab1
-                sprintf(msg, "\n%lu\tpreemt  \tTask %d\tTask %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy);
+                // OSMsgQueueTbl[OSMsgQueueEnd]->TaskType = 1;
+                // OSMsgQueueTbl[OSMsgQueueEnd]->PrioCur = (OSPrioCur);
+                // OSMsgQueueTbl[OSMsgQueueEnd]->PrioHighRdy = (OSPrioHighRdy);
+                // OSMsgQueueTbl[OSMsgQueueEnd]->Time = OSTimeGet();
+                // OSMsgQueueEnd = (OSMsgQueueEnd + 1)%20;
+                // printf("\n%lu\tpreemt  \tTask %d\tTask %d\t%d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSMsgQueueEnd);
+                // sprintf(msg, "\n%lu\tpreemt  \tTask %d\tTask %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy);
                 // sprintf(msg, "preemt  \tTask %d\tTask %d", OSPrioCur, OSPrioHighRdy);
-                OSQPost(OSMsgQueue, (void *)msg);
+                // OSQPost(OSMsgQueue, (void *)msg);
+                char msg[200];
+                sprintf(msg, "\n%lu Completed from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
+                puts(msg);
                 OSTCBHighRdy  = OSTCBPrioTbl[OSPrioHighRdy];
                 OSCtxSwCtr++;                              /* Keep track of the number of ctx switches */
                 OSIntCtxSw();                              /* Perform interrupt level ctx switch       */
@@ -883,17 +892,27 @@ void  OS_Sched (void)
     OS_CPU_SR  cpu_sr;
 #endif    
     INT8U      y;
-    char msg[256];
 
     OS_ENTER_CRITICAL();
     if ((OSIntNesting == 0) && (OSLockNesting == 0)) { /* Sched. only if all ISRs done & not locked    */
         y             = OSUnMapTbl[OSRdyGrp];          /* Get pointer to HPT ready to run              */
         OSPrioHighRdy = (INT8U)((y << 3) + OSUnMapTbl[OSRdyTbl[y]]);
         if (OSPrioHighRdy != OSPrioCur) {              /* No Ctx Sw if current task is highest rdy     */
-            // for lab1
-            sprintf(msg, "\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr);
+            // for Lab1
+            // OS_Q_Msg temp;
+            // temp->TaskType = 0;
+            // temp->PrioCur = (OSPrioCur);
+            // temp->PrioHighRdy = (OSPrioHighRdy);
+            // temp->Time = OSTimeGet();
+            // OSMsgQueueTbl[OSMsgQueueEnd]->Time = temp;
+            // OSMsgQueueEnd = (OSMsgQueueEnd +1)%20;
+            // printf("\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d\t%d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr, OSMsgQueueEnd);
+            // sprintf(msg, "\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr);
             // sprintf(msg, "complete\tTask %d\tTask %d", OSPrioCur, OSPrioHighRdy);
-            OSQPost(OSMsgQueue, (void *)msg);
+            // OSQPost(OSMsgQueue, (void *)msg);
+            char msg[256];
+            sprintf(msg, "\n%lu Preempted from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
+            puts(msg);
             OSTCBHighRdy = OSTCBPrioTbl[OSPrioHighRdy];
             OSCtxSwCtr++;                              /* Increment context switch counter             */
             OS_TASK_SW();                              /* Perform a context switch                     */            
