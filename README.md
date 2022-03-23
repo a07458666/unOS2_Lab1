@@ -1,1 +1,1 @@
-# unOS2_Lab1
+# uCOS2_Lab1
