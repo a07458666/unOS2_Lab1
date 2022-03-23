@@ -192,11 +192,11 @@ void  OSIntExit (void)
                 // OSMsgQueueEnd = (OSMsgQueueEnd + 1)%20;
                 // printf("\n%lu\tpreemt  \tTask %d\tTask %d\t%d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSMsgQueueEnd);
                 // sprintf(msg, "\n%lu\tpreemt  \tTask %d\tTask %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy);
-                // sprintf(msg, "preemt  \tTask %d\tTask %d", OSPrioCur, OSPrioHighRdy);
-                // OSQPost(OSMsgQueue, (void *)msg);
-                char msg[200];
-                sprintf(msg, "\n%lu Completed from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
-                puts(msg);
+                sprintf(msg, "\n%d\tpreemt  \tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
+                OSQPost(OSMsgQueue, (void *)msg);
+                // char msg[200];
+                // sprintf(msg, "\n%lu Completed from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
+                // puts(msg);
                 OSTCBHighRdy  = OSTCBPrioTbl[OSPrioHighRdy];
                 OSCtxSwCtr++;                              /* Keep track of the number of ctx switches */
                 OSIntCtxSw();                              /* Perform interrupt level ctx switch       */
@@ -891,7 +891,8 @@ void  OS_Sched (void)
 #if OS_CRITICAL_METHOD == 3                            /* Allocate storage for CPU status register     */
     OS_CPU_SR  cpu_sr;
 #endif    
-    INT8U      y;
+    char       msg[256];
+    INT8U             y;
 
     OS_ENTER_CRITICAL();
     if ((OSIntNesting == 0) && (OSLockNesting == 0)) { /* Sched. only if all ISRs done & not locked    */
@@ -908,11 +909,11 @@ void  OS_Sched (void)
             // OSMsgQueueEnd = (OSMsgQueueEnd +1)%20;
             // printf("\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d\t%d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr, OSMsgQueueEnd);
             // sprintf(msg, "\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr);
-            // sprintf(msg, "complete\tTask %d\tTask %d", OSPrioCur, OSPrioHighRdy);
-            // OSQPost(OSMsgQueue, (void *)msg);
-            char msg[256];
-            sprintf(msg, "\n%lu Preempted from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
-            puts(msg);
+            sprintf(msg, "\n%d\tcomplete\tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
+            OSQPost(OSMsgQueue, (void *)msg);
+            // char msg[256];
+            // sprintf(msg, "\n%lu Preempted from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
+            // puts(msg);
             OSTCBHighRdy = OSTCBPrioTbl[OSPrioHighRdy];
             OSCtxSwCtr++;                              /* Increment context switch counter             */
             OS_TASK_SW();                              /* Perform a context switch                     */            
@@ -1083,7 +1084,7 @@ INT8U  OS_TCBInit (INT8U prio, OS_STK *ptos, OS_STK *pbos, INT16U id, INT32U stk
         ptcb->OSTCBPrio      = (INT8U)prio;                /* Load task priority into TCB              */
         ptcb->OSTCBStat      = OS_STAT_RDY;                /* Task is ready to run                     */
         ptcb->OSTCBDly       = 0;                          /* Task is not delayed                      */
-        ptcb->period         = (INT8U)prio;
+        ptcb->period         = 0;
         ptcb->compTime       = 0;
 
 #if OS_TASK_CREATE_EXT_EN > 0

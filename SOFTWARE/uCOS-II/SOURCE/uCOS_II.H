@@ -495,8 +495,8 @@ extern  INT8U  const      OSMapTbl[];               /* Priority->Bit Mask lookup
 extern  INT8U  const      OSUnMapTbl[];             /* Priority->Index    lookup table                 */
 
 //Lab1 add
-// OS_EXT OS_EVENT       *OSMsgQueue;                             /* Message queue pointer                         */
-// OS_EXT void           *OSMsgQueueTbl[20];                      /* Storage for messages                          */
+OS_EXT OS_EVENT       *OSMsgQueue;                             /* Message queue pointer                         */
+OS_EXT void           *OSMsgQueueTbl[20];                      /* Storage for messages                          */
 
 // OS_EXT  INT8U       OSMsgQueueHead;
 // OS_EXT  INT8U       OSMsgQueueEnd;

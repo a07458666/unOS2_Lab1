@@ -13,9 +13,13 @@
 #define          TASK_2_COMP         3
 #define          TASK_3_COMP         4
 
-#define          TASK_1_PRIO         3
-#define          TASK_2_PRIO         6
-#define          TASK_3_PRIO         9
+#define          TASK_1_PERIODIC     3
+#define          TASK_2_PERIODIC     6
+#define          TASK_3_PERIODIC     9
+
+#define          TASK_1_PRIO         1
+#define          TASK_2_PRIO         2
+#define          TASK_3_PRIO         3
 
 #define          MSG_QUEUE_SIZE     20                /* Size of message queue used in example         */
 
@@ -77,7 +81,7 @@ void  TaskStart (void *pdata)
     OS_EXIT_CRITICAL();
 
     OSStatInit();                                          /* Initialize uC/OS-II's statistics         */
-
+    OSMsgQueue = OSQCreate(&OSMsgQueueTbl[0], MSG_QUEUE_SIZE); /* Create a message queue                   */
     printf("\nVersion V4");
     TaskStartCreateTasks();
     for (;;) {
@@ -103,7 +107,7 @@ static  void  TaskStartCreateTasks (void)
 {
     OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK_STK_SIZE - 1], TASK_1_PRIO);
     OSTaskCreate(Task2, (void *)0, &Task2Stk[TASK_STK_SIZE - 1], TASK_2_PRIO);
-    // OSTaskCreate(Task3, (void *)0, &Task3Stk[TASK_STK_SIZE - 1], TASK_3_PRIO);
+    OSTaskCreate(Task3, (void *)0, &Task3Stk[TASK_STK_SIZE - 1], TASK_3_PRIO);
 }
 
 /*$PAGE*/
@@ -125,27 +129,15 @@ void Task1()
     start = OSTimeGet();
     OS_ENTER_CRITICAL();
     OSTCBCur->compTime = TASK_1_COMP;
+    OSTCBCur->period = TASK_1_PERIODIC;
     OS_EXIT_CRITICAL();
     while(1){
         while(OSTCBCur->compTime != 0)
         {
-            // OSSchedLock();
-            // if (OSMsgQueueHead != OSMsgQueueEnd)
-            // {
-            //     printf("\n_LLL_%lu\t%s\tTask %d\tTask %d OSCtxSwCtr %d",
-            //     OSMsgQueueTbl[OSMsgQueueHead]->Time,
-            //     (OSMsgQueueTbl[OSMsgQueueHead]->TaskType == 0)? "preemt  " : "complete",
-            //     OSMsgQueueTbl[OSMsgQueueHead]->PrioCur,
-            //     OSMsgQueueTbl[OSMsgQueueHead]->PrioHighRdy,
-            //     OSCtxSwCtr);
-            //     printf("head%d\t end %d", OSMsgQueueHead, OSMsgQueueEnd);
-            //     OSMsgQueueHead = (OSMsgQueueHead + 1)%20;
-            // }
-            // msg = (char *)OSQPend(OSMsgQueue, 0, &err);
-            // if (tempMsg != msg) printf("%s", msg);
-            // tempMsg = msg;
-            // printf("%s", msg);
-            // OSSchedUnlock();
+            OS_ENTER_CRITICAL();
+            msg = (char *)OSQAccept(OSMsgQueue);
+            if (msg != NULL) printf("%s", msg);
+            OS_EXIT_CRITICAL();
         }
         OS_ENTER_CRITICAL();
         end = OSTimeGet();
@@ -177,6 +169,7 @@ void Task2()
     start = OSTimeGet();
     OS_ENTER_CRITICAL();
     OSTCBCur->compTime = TASK_2_COMP;
+    OSTCBCur->period = TASK_2_PERIODIC;
     OS_EXIT_CRITICAL();
     while(1){
         while(OSTCBCur->compTime != 0)
@@ -213,6 +206,7 @@ void Task3()
     
     OS_ENTER_CRITICAL();
     OSTCBCur->compTime = TASK_3_COMP;
+    OSTCBCur->period = TASK_3_PERIODIC;
     OS_EXIT_CRITICAL();
     while(1){
         while(OSTCBCur->compTime != 0)
