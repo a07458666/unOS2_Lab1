@@ -185,15 +185,14 @@ void  OSIntExit (void)
             OSPrioHighRdy = (INT8U)((OSIntExitY << 3) + OSUnMapTbl[OSRdyTbl[OSIntExitY]]);
             if (OSPrioHighRdy != OSPrioCur) {              /* No Ctx Sw if current task is highest rdy */
                 //for lab1
-                // OSMsgQueueTbl[OSMsgQueueEnd]->TaskType = 1;
-                // OSMsgQueueTbl[OSMsgQueueEnd]->PrioCur = (OSPrioCur);
-                // OSMsgQueueTbl[OSMsgQueueEnd]->PrioHighRdy = (OSPrioHighRdy);
-                // OSMsgQueueTbl[OSMsgQueueEnd]->Time = OSTimeGet();
-                // OSMsgQueueEnd = (OSMsgQueueEnd + 1)%20;
-                // printf("\n%lu\tpreemt  \tTask %d\tTask %d\t%d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSMsgQueueEnd);
-                // sprintf(msg, "\n%lu\tpreemt  \tTask %d\tTask %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy);
-                sprintf(msg, "\n%d\tpreemt  \tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
-                OSQPost(OSMsgQueue, (void *)msg);
+                g_msg = (char *) malloc(40 * sizeof(char));
+                if (g_msg != 0)
+                {
+                    sprintf(g_msg, "\n%d\tpreemt  \tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
+                    OSQPost(OSMsgQueue, (void *)g_msg);
+                }
+                // sprintf(msg, "\n%d\tpreemt  \tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
+                // OSQPost(OSMsgQueue, (void *)msg);
                 // char msg[200];
                 // sprintf(msg, "\n%lu Completed from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
                 // puts(msg);
@@ -307,6 +306,8 @@ void  OSStart (void)
     INT8U y;
     INT8U x;
 
+    OSTimeSet(0);
+    printf("\OSStart Time = %d, %d, %d, %d", OSTimeGet());
 
     if (OSRunning == FALSE) {
         y             = OSUnMapTbl[OSRdyGrp];        /* Find highest priority's task priority number   */
@@ -900,17 +901,14 @@ void  OS_Sched (void)
         OSPrioHighRdy = (INT8U)((y << 3) + OSUnMapTbl[OSRdyTbl[y]]);
         if (OSPrioHighRdy != OSPrioCur) {              /* No Ctx Sw if current task is highest rdy     */
             // for Lab1
-            // OS_Q_Msg temp;
-            // temp->TaskType = 0;
-            // temp->PrioCur = (OSPrioCur);
-            // temp->PrioHighRdy = (OSPrioHighRdy);
-            // temp->Time = OSTimeGet();
-            // OSMsgQueueTbl[OSMsgQueueEnd]->Time = temp;
-            // OSMsgQueueEnd = (OSMsgQueueEnd +1)%20;
-            // printf("\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d\t%d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr, OSMsgQueueEnd);
-            // sprintf(msg, "\n%lu\tcomplete\tTask %d\tTask %d OSCtxSwCtr %d",OSTimeGet(), OSPrioCur, OSPrioHighRdy, OSCtxSwCtr);
-            sprintf(msg, "\n%d\tcomplete\tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
-            OSQPost(OSMsgQueue, (void *)msg);
+            g_msg = (char *) malloc(40 * sizeof(char));
+            if (g_msg != 0)
+            {
+                sprintf(g_msg, "\n%d\tcomplete  \tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
+                OSQPost(OSMsgQueue, (void *)g_msg);
+            }
+            // sprintf(msg, "\n%d\tcomplete\tTask %d\tTask %d",(int)OSTimeGet(), (int)OSPrioCur, (int)OSPrioHighRdy);
+            // OSQPost(OSMsgQueue, (void *)msg);
             // char msg[256];
             // sprintf(msg, "\n%lu Preempted from %u to %u", OSTime, OSPrioCur, OSPrioHighRdy);
             // puts(msg);

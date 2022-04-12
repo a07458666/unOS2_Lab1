@@ -414,8 +414,8 @@ typedef struct os_tcb {
     INT8U          OSTCBBitY;          /* Bit mask to access bit position in ready group               */
 
     //for LAB1 add
-    INT16U         period;
-    INT16U         compTime;
+    INT8U         period;
+    INT8U         compTime;
     
 #if OS_TASK_DEL_EN > 0
     BOOLEAN        OSTCBDelReq;        /* Indicates whether a task needs to delete itself              */
@@ -497,6 +497,8 @@ extern  INT8U  const      OSUnMapTbl[];             /* Priority->Index    lookup
 //Lab1 add
 OS_EXT OS_EVENT       *OSMsgQueue;                             /* Message queue pointer                         */
 OS_EXT void           *OSMsgQueueTbl[20];                      /* Storage for messages                          */
+
+OS_EXT char *g_msg;
 
 // OS_EXT  INT8U       OSMsgQueueHead;
 // OS_EXT  INT8U       OSMsgQueueEnd;
