@@ -37,6 +37,9 @@ OS_STK        Task3Stk[TASK_STK_SIZE];                /* Task #3    task stack  
 
 void main (void)
 {
+    #if OS_CRITICAL_METHOD == 3                                /* Allocate storage for CPU status register */
+    OS_CPU_SR  cpu_sr;
+    #endif
     OS_STK *ptos;
     OS_STK *pbos;
     INT32U  size;
@@ -51,8 +54,18 @@ void main (void)
 
     PC_ElapsedInit();                                      /* Initialized elapsed time measurement     */
 
-    OSTaskCreate(TaskStart, (void *)0, &TaskStartStk[TASK_STK_SIZE - 1], 0);
+    OS_ENTER_CRITICAL();
+    PC_VectSet(0x08, OSTickISR);                           /* Install uC/OS-II's clock tick ISR        */
+    PC_SetTickRate(OS_TICKS_PER_SEC);                      /* Reprogram tick rate                      */
+    OS_EXIT_CRITICAL();
+
+
+    OSMsgQueue = OSQCreate(&OSMsgQueueTbl[0], MSG_QUEUE_SIZE); /* Create a message queue                   */
+    // OSTaskCreate(TaskStart, (void *)0, &TaskStartStk[TASK_STK_SIZE - 1], 0);
+    OSTaskCreate(Task1, (void *)0, &Task1Stk[TASK_STK_SIZE - 1], TASK_1_PERIODIC);
+    OSTaskCreate(Task2, (void *)0, &Task2Stk[TASK_STK_SIZE - 1], TASK_2_PERIODIC);
     
+    OSTimeSet(0);
     OSStart();                                             /* Start multitasking                       */
 }
 
@@ -82,9 +95,7 @@ void  TaskStart (void *pdata)
 
     OSStatInit();                                          /* Initialize uC/OS-II's statistics         */
     OSMsgQueue = OSQCreate(&OSMsgQueueTbl[0], MSG_QUEUE_SIZE); /* Create a message queue                   */
-    printf("\nVersion V7");
-    
-    OSTimeSet(0);
+    printf("\nVersion V8");
     
     TaskStartCreateTasks();
     for (;;) {
@@ -92,10 +103,9 @@ void  TaskStart (void *pdata)
             if (key == 0x1B) {                             /* Yes, see if it's the ESCAPE key          */
                 PC_DOSReturn();                            /* Return to DOS                            */
             }
-            if (key == 0x31) {                             /* Yes, see if it's the ESCAPE key          */
-            }
         }
         OSCtxSwCtr = 0;                                    /* Clear context switch counter             */
+        OSTCBCur->deadline = OSTimeGet() + OS_TICKS_PER_SEC;
         OSTimeDly(OS_TICKS_PER_SEC);                       /* Wait one second                          */
     }
 }
@@ -125,7 +135,7 @@ void Task1()
     int start;
     int end;
     int toDelay;
-    
+    INT16S     key;
     char  *msg;
     INT8U  err;
 
@@ -133,6 +143,7 @@ void Task1()
     OS_ENTER_CRITICAL();
     OSTCBCur->compTime = TASK_1_COMP;
     OSTCBCur->period = TASK_1_PERIODIC;
+    OSTCBCur->deadline = start + TASK_1_PERIODIC;
     OS_EXIT_CRITICAL();
     while(1){
         while(OSTCBCur->compTime != 0)
@@ -141,17 +152,26 @@ void Task1()
             msg = (char *)OSQAccept(OSMsgQueue);
             if (msg != NULL)
             {
-            	printf("%s", msg);
+            	// if (OSTimeGet() < 25) printf("%s", msg);
+                printf("%s", msg);
             	free(msg);
             }
             OS_EXIT_CRITICAL();
         }
         OS_ENTER_CRITICAL();
+        if (PC_GetKey(&key) == TRUE) {                     /* See if key has been pressed              */
+            if (key == 0x1B) {                             /* Yes, see if it's the ESCAPE key          */
+                PC_DOSReturn();                            /* Return to DOS                            */
+            }
+        }
         end = OSTimeGet();
         toDelay = OSTCBCur->period - (end - start);
-        start = start + OSTCBCur->period;
-        OSTCBCur->compTime = TASK_1_COMP;
         if (toDelay < 0) printf("\nTask1 error toDelay = %d, %d, %d, %d", toDelay, OSTCBCur->period, end, start);
+        start = start + OSTCBCur->period;
+        OSTCBCur->deadline = start + TASK_1_PERIODIC;
+        OSTCBCur->compTime = TASK_1_COMP;
+        // printf("\n Task1 = start %d, deadline %d", (int)start, (int)OSTCBCur->deadline);
+        // printf("\n compTime %d, end %d", (int)OSTCBCur->compTime, (int)end);
         OS_EXIT_CRITICAL();
         OSTimeDly(toDelay);
     }
@@ -177,6 +197,7 @@ void Task2()
     OS_ENTER_CRITICAL();
     OSTCBCur->compTime = TASK_2_COMP;
     OSTCBCur->period = TASK_2_PERIODIC;
+    OSTCBCur->deadline = start + TASK_2_PERIODIC;
     OS_EXIT_CRITICAL();
     while(1){
         while(OSTCBCur->compTime != 0)
@@ -185,9 +206,12 @@ void Task2()
         OS_ENTER_CRITICAL();
         end = OSTimeGet();
         toDelay = OSTCBCur->period - (end - start);
-        start = start + OSTCBCur->period;
         if (toDelay < 0) printf("\nnTask2 error toDelay = %d, %d, %d, %d", toDelay, OSTCBCur->period, end, start);
+        start = start + OSTCBCur->period;
+        OSTCBCur->deadline = start + TASK_2_PERIODIC;
         OSTCBCur->compTime = TASK_2_COMP;
+        // printf("\n Task2 = start %d, deadline %d", (int)start, (int)OSTCBCur->deadline);
+        // printf("\n compTime %d, end %d",(int)OSTCBCur->compTime, (int)end);
         OS_EXIT_CRITICAL();
         OSTimeDly(toDelay);
     }
@@ -214,6 +238,7 @@ void Task3()
     OS_ENTER_CRITICAL();
     OSTCBCur->compTime = TASK_3_COMP;
     OSTCBCur->period = TASK_3_PERIODIC;
+    OSTCBCur->deadline = start + TASK_3_PERIODIC;
     OS_EXIT_CRITICAL();
     while(1){
         while(OSTCBCur->compTime != 0)
@@ -223,6 +248,7 @@ void Task3()
         end = OSTimeGet();
         toDelay = OSTCBCur->period - (end - start);
         start = start + OSTCBCur->period;
+        OSTCBCur->deadline = start + TASK_3_PERIODIC;
         OSTCBCur->compTime = TASK_3_COMP;
         OS_EXIT_CRITICAL();
         OSTimeDly(toDelay);

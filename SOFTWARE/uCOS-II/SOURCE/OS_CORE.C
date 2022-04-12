@@ -17,6 +17,47 @@
 #include "includes.h"
 #endif
 
+#define  INT32U_MAX 4294967295
+#define EDF
+#ifdef EDF
+INT8U OSDeadlineHighRdy(void)
+{
+    OS_TCB    *ptcb;
+    INT32U minDeadline = INT32U_MAX;
+    INT8U  minTCBPrio = OS_IDLE_PRIO;
+    if (OSRunning == TRUE) {    
+        ptcb = OSTCBList;                                  /* Point at first TCB in TCB list           */
+        while (ptcb->OSTCBPrio != OS_IDLE_PRIO) {          /* Go through all TCBs in TCB list          */
+            OS_ENTER_CRITICAL();
+            // printf("\n check if %u, %u, %u", ptcb->OSTCBStat, OSRdyTbl[ptcb->OSTCBY], ptcb->OSTCBBitX);
+            if (ptcb->OSTCBStat == OS_STAT_RDY &&
+                (OSRdyTbl[ptcb->OSTCBY] & ptcb->OSTCBBitX) > 0 &&
+                ptcb->OSTCBPrio != OS_IDLE_PRIO &&
+                ptcb->OSTCBPrio != OS_IDLE_PRIO -1
+               )
+            {
+                // printf("\n Is RDY %u %lu", ptcb->OSTCBPrio, ptcb->deadline);
+                // printf("\n Is min %u %lu", minTCBPrio, minDeadline);
+                // printf("\n Is OSPrioCur %u", OSPrioCur);
+                if ((ptcb->deadline == minDeadline) && (minTCBPrio != OSPrioCur))
+                {
+                    minDeadline = ptcb->deadline;
+                    minTCBPrio = ptcb->OSTCBPrio;
+                }
+                else if (ptcb->deadline < minDeadline)
+                {
+                    minDeadline = ptcb->deadline;
+                    minTCBPrio = ptcb->OSTCBPrio;
+                }
+            }
+            ptcb = ptcb->OSTCBNext;                        /* Point at next TCB in TCB list            */
+            OS_EXIT_CRITICAL();
+        }
+    }
+    return minTCBPrio;
+}
+#endif //EDF
+
 /*
 *********************************************************************************************************
 *                              MAPPING TABLE TO MAP BIT POSITION TO BIT MASK
@@ -175,6 +216,7 @@ void  OSIntExit (void)
     OS_CPU_SR  cpu_sr;
 #endif
     char msg[256];
+    INT8U deadlineRdy;
     if (OSRunning == TRUE) {
         OS_ENTER_CRITICAL();
         if (OSIntNesting > 0) {                            /* Prevent OSIntNesting from wrapping       */
@@ -183,6 +225,10 @@ void  OSIntExit (void)
         if ((OSIntNesting == 0) && (OSLockNesting == 0)) { /* Reschedule only if all ISRs complete ... */
             OSIntExitY    = OSUnMapTbl[OSRdyGrp];          /* ... and not locked.                      */
             OSPrioHighRdy = (INT8U)((OSIntExitY << 3) + OSUnMapTbl[OSRdyTbl[OSIntExitY]]);
+#ifdef EDF
+            OSPrioHighRdy = OSDeadlineHighRdy();
+            // printf("\n deadlineRdy %d",(int)OSPrioHighRdy);
+#endif //EDF
             if (OSPrioHighRdy != OSPrioCur) {              /* No Ctx Sw if current task is highest rdy */
                 //for lab1
                 g_msg = (char *) malloc(40 * sizeof(char));
@@ -305,9 +351,6 @@ void  OSStart (void)
 {
     INT8U y;
     INT8U x;
-
-    OSTimeSet(0);
-    printf("\OSStart Time = %d, %d, %d, %d", OSTimeGet());
 
     if (OSRunning == FALSE) {
         y             = OSUnMapTbl[OSRdyGrp];        /* Find highest priority's task priority number   */
@@ -899,6 +942,11 @@ void  OS_Sched (void)
     if ((OSIntNesting == 0) && (OSLockNesting == 0)) { /* Sched. only if all ISRs done & not locked    */
         y             = OSUnMapTbl[OSRdyGrp];          /* Get pointer to HPT ready to run              */
         OSPrioHighRdy = (INT8U)((y << 3) + OSUnMapTbl[OSRdyTbl[y]]);
+#ifdef EDF
+        OSPrioHighRdy = OSDeadlineHighRdy();
+        // printf("\n deadlineRdy %d",(int)OSPrioHighRdy);
+#endif //EDF
+        // printf("\n OS_Sched deadlineRdy %d",(int)deadlineRdy);
         if (OSPrioHighRdy != OSPrioCur) {              /* No Ctx Sw if current task is highest rdy     */
             // for Lab1
             g_msg = (char *) malloc(40 * sizeof(char));
@@ -1084,6 +1132,7 @@ INT8U  OS_TCBInit (INT8U prio, OS_STK *ptos, OS_STK *pbos, INT16U id, INT32U stk
         ptcb->OSTCBDly       = 0;                          /* Task is not delayed                      */
         ptcb->period         = 0;
         ptcb->compTime       = 0;
+        ptcb->deadline       = (INT32U)prio;
 
 #if OS_TASK_CREATE_EXT_EN > 0
         ptcb->OSTCBExtPtr    = pext;                       /* Store pointer to TCB extension           */

@@ -333,14 +333,6 @@ typedef struct {
 } OS_Q_DATA;
 #endif
 
-// for lab1
-// typedef struct {
-//     INT8U             TaskType;
-//     INT8U             PrioCur;
-//     INT8U             PrioHighRdy;
-//     INT32U            Time;
-// } OS_Q_Msg;
-
 /*
 *********************************************************************************************************
 *                                           SEMAPHORE DATA
@@ -413,9 +405,12 @@ typedef struct os_tcb {
     INT8U          OSTCBBitX;          /* Bit mask to access bit position in ready table               */
     INT8U          OSTCBBitY;          /* Bit mask to access bit position in ready group               */
 
-    //for LAB1 add
+    // for LAB1 add
     INT8U         period;
     INT8U         compTime;
+    // for Lab2 add
+    volatile  INT32U  deadline;
+
     
 #if OS_TASK_DEL_EN > 0
     BOOLEAN        OSTCBDelReq;        /* Indicates whether a task needs to delete itself              */
